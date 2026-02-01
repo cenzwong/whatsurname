@@ -1,32 +1,16 @@
 import os
-import dspy
-from dotenv import load_dotenv
+from typing import Any
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-from rich.layout import Layout
-from rich.live import Live
+# from rich.layout import Layout # Unused
+# from rich.live import Live # Unused
 
-load_dotenv()
+from analyzer import NameAnalyzer
 
 # Initialize Rich Console
 console = Console()
-
-class OnomasticAnalyzer(dspy.Signature):
-    """
-    Perform a deep cultural and linguistic analysis of a personal name.
-    Identify literal meanings, original scripts, and demographic associations.
-    """
-    name = dspy.InputField(desc="The full name string (e.g., 'Mikhail')")
-    
-    literal_meaning = dspy.OutputField(desc="Semantic definition of the name (e.g., 'Who is like God?')")
-    original_script = dspy.OutputField(desc="The name in its native script (e.g., 'Михаил' or '三沢')")
-    ethnic_background = dspy.OutputField(desc="The specific ethno-cultural group (e.g., Ashkenazi Jewish, Han Chinese)")
-    geographic_centroid = dspy.OutputField(desc="The primary country or region of historical origin")
-    likely_gender = dspy.OutputField(desc="Masculine, Feminine, or Unisex (include probability if possible)")
-    confidence_score = dspy.OutputField(desc="Float from 0.0 to 1.0 indicating confidence in the analysis")
-    reasoning = dspy.OutputField(desc="Step-by-step logic justifying the results")
 
 def display_header():
     console.print(Panel(
@@ -35,11 +19,18 @@ def display_header():
         border_style="cyan"
     ))
 
-def display_results(name, result):
+def display_results(name: str, result: Any):
+    """Display analysis results in a structured table."""
     # Main Results Table
     table = Table(title=f"Analysis for [bold yellow]{name}[/bold yellow]", show_header=False, box=None)
     table.add_column("Field", style="cyan", justify="right")
     table.add_column("Value", style="white")
+
+    table.add_row("First Name", result.first_name)
+    if result.middle_name and result.middle_name.lower() not in ["none", ""]:
+        table.add_row("Middle Name", result.middle_name)
+    table.add_row("Last Name", result.last_name)
+    table.add_section() # logical separator
 
     table.add_row("Meaning", result.literal_meaning)
     table.add_row("Script", f"[bold]{result.original_script}[/bold]")
@@ -52,12 +43,12 @@ def display_results(name, result):
         conf = float(result.confidence_score)
         conf_color = "green" if conf > 0.8 else "yellow" if conf > 0.5 else "red"
         table.add_row("Confidence", f"[{conf_color}]{conf:.2f}[/{conf_color}]")
-    except:
+    except (ValueError, TypeError):
         table.add_row("Confidence", str(result.confidence_score))
 
     console.print(Panel(table, border_style="blue", expand=False))
     
-    # Reasoning Panel (Collapsible concept, but just printed nicely here)
+    # Reasoning Panel
     console.print(Panel(
         Text(result.reasoning, style="italic dim"),
         title="Reasoning Chain",
@@ -66,12 +57,12 @@ def display_results(name, result):
     ))
 
 def main():
-    api_key = os.getenv("OLLAMA_API")
-    # Configure DSPy with Ollama
-    lm = dspy.LM('ollama_chat/gpt-oss:120b-cloud', api_base='http://localhost:11434', api_key=api_key)
-    dspy.configure(lm=lm)
-    
-    name_analyzer = dspy.ChainOfThought(OnomasticAnalyzer)
+    try:
+        # Initialize the analyzer (encapsulates DSPy/Ollama setup)
+        analyzer = NameAnalyzer()
+    except Exception as e:
+        console.print(f"[bold red]Initialization Error[/bold red]: {e}")
+        return
 
     display_header()
     console.print("[dim]Type 'quit' or 'exit' to stop[/dim]\n")
@@ -84,7 +75,7 @@ def main():
                 break
             
             with console.status(f"[bold blue]Analyzing '{name}'...[/bold blue]", spinner="dots"):
-                result = name_analyzer(name=name)
+                result = analyzer.analyze(name=name)
             
             console.print() # Spacer
             display_results(name, result)
