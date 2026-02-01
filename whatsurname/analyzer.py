@@ -24,6 +24,22 @@ class OnomasticAnalyzerSignature(dspy.Signature):
     reasoning: str = dspy.OutputField(desc="Step-by-step logic justifying the results")
 
 class NameAnalyzer(dspy.Module):
+    """
+    A DSPy module for analyzing names.
+
+    This class uses a language model to extract information about a name,
+    including its meaning, origin, ethnicity, and gender.
+
+    Examples:
+        ```python
+        from whatsurname import NameAnalyzer
+
+        analyzer = NameAnalyzer()
+        result = analyzer("Svetlana Kuznetsova")
+        print(result.first_name)  # Output: Svetlana
+        print(result.geographic_origin)  # Output: Russia
+        ```
+    """
     def __init__(self, model_name='ollama_chat/gpt-oss:120b-cloud', api_base='http://localhost:11434'):
         super().__init__()
         self.api_key = os.getenv("OLLAMA_API")
