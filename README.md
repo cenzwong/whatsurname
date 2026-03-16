@@ -18,6 +18,11 @@ A powerful, AI-driven utility for analyzing names to determine their origin, eth
 
 ## Setup
 
+** Using pipx
+```
+pipx install git+https://github.com/cenzwong/whatsurname.git
+```
+
 1.  **Clone the repository**:
     ```bash
     git clone https://github.com/yourusername/whatsurname.git
