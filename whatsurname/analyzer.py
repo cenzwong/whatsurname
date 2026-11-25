@@ -49,8 +49,13 @@ class NameAnalyzer(dspy.Module):
         self.model = settings["model"]
         self.base_url = settings["base_url"]
         self.api_key = settings["api_key"]
+
+        # The current model setting is an OpenAI-compatible model ID, while
+        # older callers may pass a DSPy provider-qualified value to model_name.
+        legacy_provider_model = model is None and model_name and "/" in model_name
+        lm_model = self.model if legacy_provider_model else f"openai/{self.model}"
         self.lm = dspy.LM(
-            f"openai/{self.model}",
+            lm_model,
             api_base=self.base_url,
             api_key=self.api_key,
         )

@@ -36,7 +36,7 @@ class NameAnalysisApp(App):
     def __init__(self):
         super().__init__()
         self.analyzer = NameAnalyzer()
-        self.SUB_TITLE = f"Model: {self.analyzer.model}"
+        self.sub_title = f"Model: {self.analyzer.model}"
 
     def compose(self) -> ComposeResult:
         yield Header()
